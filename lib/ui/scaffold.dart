@@ -1,6 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:rick_and_morty_character_list/ui/character_list_screen.dart';
+import 'package:rick_and_morty_character_list/ui/character_list/screen.dart';
 import 'package:rick_and_morty_character_list/ui/favorite_characters_screen.dart';
 import 'package:rick_and_morty_character_list/ui/theme_controller.dart';
 

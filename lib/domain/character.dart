@@ -1,8 +1,25 @@
 import 'package:equatable/equatable.dart';
 
-enum CharacterGender { male, female, genderless, unknown }
+enum CharacterGender {
+  male('Male'),
+  female('Female'),
+  genderless('Genderless'),
+  unknown('unknown');
 
-enum CharacterStatus { alive, dead, unknown }
+  const CharacterGender(this.name);
+
+  final String name;
+}
+
+enum CharacterStatus {
+  alive('Alive'),
+  dead('Dead'),
+  unknown('unknown');
+
+  const CharacterStatus(this.name);
+
+  final String name;
+}
 
 class CharacterLocation with EquatableMixin {
   const CharacterLocation({required this.name, required this.link});
@@ -20,33 +37,21 @@ class Character with EquatableMixin {
   const Character({
     required this.id,
     required this.name,
+    required this.gender,
     required this.status,
-    required this.isFavorite,
     required this.species,
-    // required this.type,
-    // required this.gender,
-    //   required this.origin,
-    //   required this.location,
     required this.imagePath,
-    //   required this.episode,
-    //   required this.url,
-    // required this.createdt,
+    required this.isFavorite,
   });
 
   final CharacterId id;
   final String name;
+  final CharacterGender gender;
   final CharacterStatus status;
-  final bool isFavorite;
   final String species;
-  // final String type;
-  // final CharacterGender gender;
-  // final CharacterLocation origin;
-  // final CharacterLocation location;
   final Uri imagePath;
-  // final Uri episode;
-  // final Uri url;
-  // final DateTime createdt;
+  final bool isFavorite;
 
   @override
-  List<Object?> get props => throw UnimplementedError();
+  List<Object?> get props => [id];
 }
