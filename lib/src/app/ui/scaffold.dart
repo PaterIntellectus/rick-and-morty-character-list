@@ -18,9 +18,9 @@ class _AppScaffoldState extends State<AppScaffold>
   final navItems = <BottomNavigationBarItem>[
     BottomNavigationBarItem(
       icon: Icon(Icons.menu_book_outlined),
-      label: 'Список',
+      label: 'List',
     ),
-    BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Любимые'),
+    BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Favorites'),
   ];
 
   late final _tabController = TabController(length: 2, vsync: this);

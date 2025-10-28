@@ -20,7 +20,7 @@ class _CharactersScreenState extends State<CharactersScreen>
     super.build(context);
 
     return CharacterListProvider(
-      initialEvent: CharacterListRefreshed(),
+      initialEvent: CharacterListSubscribed(),
       builder: (context, child) {
         return BlocListener<CharacterListBloc, CharacterListState>(
           listener: (context, state) {
@@ -31,8 +31,8 @@ class _CharactersScreenState extends State<CharactersScreen>
             }
           },
           child: CharacterGridView(
-            onRefresh: () async =>
-                context.read<CharacterListBloc>().add(CharacterListRefreshed()),
+            settings: InfiniteListSettings(enabled: true, isInitial: false),
+            padding: EdgeInsets.symmetric(horizontal: 4),
             itemBuilder: (context, character) => CharacterCard(
               character: character,
               actions: [

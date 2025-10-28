@@ -7,13 +7,23 @@ sealed class CharacterListEvent with EquatableMixin {
   List<Object?> get props => const [];
 }
 
-final class CharacterListRefreshed extends CharacterListEvent {
-  const CharacterListRefreshed({this.filter});
+final class CharacterListSubscribed extends CharacterListEvent {
+  const CharacterListSubscribed({this.filter});
 
   final CharacterFilter? filter;
 
   @override
   List<Object?> get props => [...super.props, filter];
+}
+
+final class CharacterListRefreshed extends CharacterListEvent {
+  const CharacterListRefreshed({this.filter, this.limit = 20});
+
+  final int limit;
+  final CharacterFilter? filter;
+
+  @override
+  List<Object?> get props => [...super.props, filter, limit];
 }
 
 final class CharacterListRequestedMore extends CharacterListEvent {

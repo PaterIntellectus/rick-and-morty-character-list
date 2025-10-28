@@ -6,14 +6,15 @@ import 'package:equatable/equatable.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/character.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/filter.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/repository.dart';
+import 'package:rick_and_morty_character_list/src/shared/lib/collections/paginated_list.dart';
 
 part 'event.dart';
 part 'state.dart';
 
 class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
   CharacterListBloc(this.characterRepository) : super(CharacterListInitial()) {
-    on<CharacterListRefreshed>(_refreshList, transformer: restartable());
-    on<CharacterListRequestedMore>(_requestMoreItems, transformer: droppable());
+    on<CharacterListSubscribed>(_subscribe, transformer: restartable());
+    on<CharacterListRequestedMore>(_loadMore, transformer: droppable());
     on<CharacterListToggleCharacterFavoriteStatus>(
       _toggleCharacterFavoriteStatus,
       transformer: droppable(),
@@ -22,65 +23,45 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
 
   final CharacterRepository characterRepository;
 
-  void _refreshList(
-    CharacterListRefreshed event,
+  void _subscribe(
+    CharacterListSubscribed event,
     Emitter<CharacterListState> emit,
   ) async {
-    print('_refreshList');
-    emit(CharacterListRefreshing());
+    print('qwer:bloc:_subscribe');
 
-    try {
-      final charactersPage = await characterRepository.list(
-        filter: event.filter,
-      );
+    emit(
+      CharacterListRefreshing(list: PaginatedList(items: const [], total: 0)),
+    );
 
-      emit(
-        CharacterListSuccess(
-          totalCharacters:
-              charactersPage.totalItemsCount ?? charactersPage.items.length,
-          characters: charactersPage.items,
-        ),
-      );
-    } catch (error) {
-      emit(CharacterListFailure(message: error.toString()));
-    }
+    await emit.forEach(
+      characterRepository.watch(filter: event.filter),
+      onData: (list) {
+        print('qwer:bloc:_subscribe:list.total: ${list.total}');
+        print('qwer:bloc:_subscribe:list.length: ${list.length}');
+
+        return CharacterListSuccess(list: list);
+      },
+      onError: (error, stackTrace) =>
+          CharacterListFailure(list: state._list, message: error.toString()),
+    );
+
+    print('qwer:bloc:_subscribe:end');
   }
 
-  void _requestMoreItems(
+  void _loadMore(
     CharacterListRequestedMore event,
     Emitter<CharacterListState> emit,
   ) async {
-    emit(
-      CharacterListLoadingMore(
-        characters: state.characters,
-        totalCharacters: state.totalCharacters,
-      ),
-    );
-
-    await Future.delayed(Duration(seconds: 1));
+    emit(CharacterListLoadingMore(list: state._list));
 
     try {
-      final charactersPage = await characterRepository.list(
+      await characterRepository.list(
         offset: event.offset,
         limit: event.limit,
         filter: event.filter,
       );
-
-      final characters = [...state.characters, ...charactersPage.items];
-
-      emit(
-        CharacterListSuccess(
-          totalCharacters: state.totalCharacters,
-          characters: characters,
-        ),
-      );
     } catch (error) {
-      emit(
-        CharacterListFailure(
-          message: error.toString(),
-          characters: state.characters,
-        ),
-      );
+      emit(CharacterListFailure(list: state._list, message: error.toString()));
     }
   }
 
@@ -94,17 +75,8 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
       character = character.toggleFavorite(event.value);
 
       await characterRepository.save(character);
-
-      emit(
-        CharacterListSuccess(
-          totalCharacters: state.totalCharacters,
-          characters: state.characters
-              .map((c) => c.id == event.id ? character : c)
-              .toList(),
-        ),
-      );
     } catch (error) {
-      emit(CharacterListFailure(message: error.toString()));
+      emit(CharacterListFailure(list: state._list, message: error.toString()));
     }
   }
 }

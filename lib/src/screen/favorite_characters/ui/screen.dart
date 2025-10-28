@@ -19,27 +19,78 @@ class _FavoriteCharactersScreenState extends State<FavoriteCharactersScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
-    debugPrint('FavoriteCharactersScreen');
     super.build(context);
 
     final filter = CharacterFilter(favoriteOnly: true);
+    final padding = EdgeInsets.symmetric(horizontal: 4);
 
     return CharacterListProvider(
-      initialEvent: CharacterListRefreshed(filter: filter),
-      builder: (context, child) => CharacterGridView(
-        filter: filter,
-        itemBuilder: (context, character) => CharacterCard(
-          character: character,
-          actions: [
-            FavoriteButton(
-              isFavorite: character.isFavorite,
-              onPressed: () => context.read<CharacterListBloc>().add(
-                CharacterListToggleCharacterFavoriteStatus(id: character.id),
+      initialEvent: CharacterListSubscribed(filter: filter),
+      builder: (context, child) {
+        return CharacterGridView(
+          padding: padding,
+          filter: filter,
+          itemBuilder: (context, character) => CharacterCard(
+            character: character,
+            actions: [
+              FavoriteButton(
+                isFavorite: character.isFavorite,
+                onPressed: () => context.read<CharacterListBloc>().add(
+                  CharacterListToggleCharacterFavoriteStatus(id: character.id),
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+
+        // return BlocBuilder<CharacterListBloc, CharacterListState>(
+        //   builder: (context, state) {
+        //     if (state is! CharacterListLoading && state.characters.isEmpty) {
+        //       return RefreshIndicator(
+        //         // onRefresh: () async {},
+        //         onRefresh: () async => context.read<CharacterListBloc>().add(
+        //           CharacterListSubscribed(filter: filter),
+        //         ),
+        //         child: CustomScrollView(
+        //           slivers: [
+        //             SliverPadding(
+        //               padding: padding,
+        //               sliver: SliverFillRemaining(
+        //                 child: Center(
+        //                   child: Text(
+        //                     'Your Favorites is empty\n'
+        //                     'Try tapping some stars ;)',
+        //                     textAlign: TextAlign.center,
+        //                     style: theme.textTheme.bodyLarge,
+        //                   ),
+        //                 ),
+        //               ),
+        //             ),
+        //           ],
+        //         ),
+        //       );
+        //     }
+
+        //     return CharacterGridView(
+        //       padding: padding,
+        //       filter: filter,
+        //       itemBuilder: (context, character) => CharacterCard(
+        //         character: character,
+        //         actions: [
+        //           FavoriteButton(
+        //             isFavorite: character.isFavorite,
+        //             onPressed: () => context.read<CharacterListBloc>().add(
+        //               CharacterListToggleCharacterFavoriteStatus(
+        //                 id: character.id,
+        //               ),
+        //             ),
+        //           ),
+        //         ],
+        //       ),
+        //     );
+        //   },
+        // );
+      },
     );
   }
 

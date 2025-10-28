@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty_character_list/src/app/ui/bloc/bloc.dart';
 import 'package:rick_and_morty_character_list/src/app/ui/scaffold.dart';
-import 'package:rick_and_morty_character_list/src/domain/character/ui/repository_provider.dart';
 import 'package:rick_and_morty_character_list/src/shared/ui/theme_controller.dart';
 
 class App extends StatefulWidget {
@@ -38,9 +37,10 @@ class _AppState extends State<App> with TickerProviderStateMixin {
                 AppFailure() => Scaffold(
                   body: Center(child: Text(state.message.toString())),
                 ),
-                AppSucess(characterRepository: final cr) =>
-                  CharacterRepositoryProvider(
-                    repository: cr,
+                AppSucess(characterRepository: final repo) =>
+                  RepositoryProvider(
+                    create: (context) => repo,
+                    dispose: (value) => value.close(),
                     child: AppScaffold(themeController: _themeController),
                   ),
               };

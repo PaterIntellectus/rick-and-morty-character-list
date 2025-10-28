@@ -6,9 +6,13 @@ class CharacterFilter with EquatableMixin {
 
   final bool favoriteOnly;
 
-  List<Character> apply(List<Character> characters) => favoriteOnly
-      ? characters.where((c) => c.isFavorite).toList()
-      : characters;
+  List<Character> apply(List<Character> characters) {
+    return favoriteOnly
+        ? characters.where((c) => c.isFavorite).toList()
+        : characters;
+  }
+
+  bool check(Character character) => favoriteOnly ? character.isFavorite : true;
 
   @override
   List<Object?> get props => [favoriteOnly];

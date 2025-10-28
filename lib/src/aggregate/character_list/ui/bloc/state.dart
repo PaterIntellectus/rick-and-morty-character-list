@@ -3,54 +3,50 @@ part of 'bloc.dart';
 enum CharacterListStatus { loading, success, failure }
 
 sealed class CharacterListState with EquatableMixin {
-  const CharacterListState({
-    required this.totalCharacters,
-    required List<Character> characters,
-  }) : _characters = characters;
+  const CharacterListState({required PaginatedList<Character> list})
+    : _list = list;
 
-  final List<Character> _characters;
-  final int totalCharacters;
+  final PaginatedList<Character> _list;
 
-  UnmodifiableListView<Character> get characters =>
-      UnmodifiableListView(_characters);
+  bool get hasMore => !_list.isFull;
 
-  bool get isFull => characters.length == totalCharacters;
-  bool get isNotFull => !isFull;
+  UnmodifiableListView<Character> get list => UnmodifiableListView(_list.items);
+  int get total => _list.total;
 
   @override
-  List<Object?> get props => [characters, totalCharacters];
+  List<Object?> get props => [list];
 }
 
 final class CharacterListInitial extends CharacterListState {
   const CharacterListInitial()
-    : super(totalCharacters: 0, characters: const []);
+    : super(list: const PaginatedList(items: [], total: 0));
 }
 
-final class CharacterListRefreshing extends CharacterListState {
-  const CharacterListRefreshing({
-    super.totalCharacters = 0,
-    super.characters = const [],
+sealed class CharacterListLoading extends CharacterListState {
+  const CharacterListLoading({
+    super.list = const PaginatedList(items: [], total: 0),
   });
 }
 
-final class CharacterListLoadingMore extends CharacterListState {
+final class CharacterListRefreshing extends CharacterListLoading {
+  const CharacterListRefreshing({
+    super.list = const PaginatedList(items: [], total: 0),
+  });
+}
+
+final class CharacterListLoadingMore extends CharacterListLoading {
   const CharacterListLoadingMore({
-    super.totalCharacters = 0,
-    super.characters = const [],
+    super.list = const PaginatedList(items: [], total: 0),
   });
 }
 
 final class CharacterListSuccess extends CharacterListState {
-  const CharacterListSuccess({
-    required super.totalCharacters,
-    required super.characters,
-  });
+  const CharacterListSuccess({required super.list});
 }
 
 final class CharacterListFailure extends CharacterListState {
   const CharacterListFailure({
-    super.totalCharacters = 0,
-    super.characters = const [],
+    super.list = const PaginatedList(items: [], total: 0),
     required this.message,
   });
 
@@ -59,42 +55,3 @@ final class CharacterListFailure extends CharacterListState {
   @override
   List<Object?> get props => [...super.props, message];
 }
-
-// class CharacterListStateOld with EquatableMixin {
-//   const CharacterListStateOld({
-//     required this.status,
-//     required List<Character> characters,
-//     required this.totalCharacters,
-//     required this.message,
-//   }) : _characters = characters;
-
-//   static const initial = CharacterListStateOld(
-//     status: CharacterListStatus.loading,
-//     characters: [],
-//     totalCharacters: null,
-//     message: '',
-//   );
-
-//   CharacterListStateOld copyWith({
-//     final CharacterListStatus? status,
-//     final List<Character>? characters,
-//     final int? totalCharacters,
-//     final String? message,
-//   }) => CharacterListStateOld(
-//     status: status ?? this.status,
-//     characters: characters ?? this.characters,
-//     totalCharacters: totalCharacters ?? this.totalCharacters,
-//     message: message ?? this.message,
-//   );
-
-//   final CharacterListStatus status;
-//   final List<Character> _characters;
-//   final int? totalCharacters;
-//   final String message;
-
-//   UnmodifiableListView<Character> get characters =>
-//       UnmodifiableListView(_characters);
-
-//   @override
-//   List<Object?> get props => [status, _characters, totalCharacters, message];
-// }

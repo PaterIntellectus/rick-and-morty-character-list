@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/bloc/bloc.dart';
-import 'package:rick_and_morty_character_list/src/domain/character/ui/repository_provider.dart';
+import 'package:rick_and_morty_character_list/src/domain/character/model/repository.dart';
 
 class CharacterListProvider extends StatelessWidget {
   const CharacterListProvider({
@@ -17,7 +17,7 @@ class CharacterListProvider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repository = CharacterRepositoryProvider.of(context);
+    final repository = context.read<CharacterRepository>();
 
     return BlocProvider(
       create: (context) {

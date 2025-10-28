@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:equatable/equatable.dart';
-import 'package:rick_and_morty_character_list/src/domain/character/data/character_repository.dart';
+import 'package:rick_and_morty_character_list/src/domain/character/data/repository.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/character.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/repository.dart';
 import 'package:rick_and_morty_character_list/src/shared/data/api/client.dart';
