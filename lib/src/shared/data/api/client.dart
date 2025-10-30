@@ -78,14 +78,10 @@ final class RickAndMortyRestApiClient {
     );
   }
 
-  Future<CharacterDto> characters(List<int> ids) async {
+  Future<CharacterDto> character(int id) async {
     final response = await _httpClient.get(
       _baseUrl.replace(
-        pathSegments: [
-          ..._baseUrl.pathSegments,
-          characterEndpoint,
-          '/${ids.join(',')}',
-        ],
+        pathSegments: [..._baseUrl.pathSegments, characterEndpoint, '/$id'],
       ),
     );
 

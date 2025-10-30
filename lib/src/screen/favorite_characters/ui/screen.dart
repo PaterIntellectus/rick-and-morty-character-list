@@ -17,30 +17,53 @@ class FavoriteCharactersScreen extends StatefulWidget {
 
 class _FavoriteCharactersScreenState extends State<FavoriteCharactersScreen>
     with AutomaticKeepAliveClientMixin {
+  final filter = CharacterFilter(favoriteOnly: true);
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    final filter = CharacterFilter(favoriteOnly: true);
-    final padding = EdgeInsets.symmetric(horizontal: 4);
+    final theme = Theme.of(context);
 
     return CharacterListProvider(
       initialEvent: CharacterListSubscribed(filter: filter),
       builder: (context, child) {
-        return CharacterGridView(
-          padding: padding,
-          filter: filter,
-          itemBuilder: (context, character) => CharacterCard(
-            character: character,
-            actions: [
-              FavoriteButton(
-                isFavorite: character.isFavorite,
-                onPressed: () => context.read<CharacterListBloc>().add(
-                  CharacterListToggleCharacterFavoriteStatus(id: character.id),
-                ),
+        return BlocBuilder<CharacterListBloc, CharacterListState>(
+          builder: (context, state) {
+            if (state is! CharacterListLoading && state.characters.isEmpty) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.star, size: 100),
+
+                  Text(
+                    "Your favorites are empty\n"
+                    "Try tapping some Stars ;)",
+                    style: theme.textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              );
+            }
+
+            return CharacterGridView(
+              padding: EdgeInsets.only(left: 4, right: 4),
+              filter: filter,
+              itemBuilder: (context, character) => CharacterCard(
+                character: character,
+                actions: [
+                  FavoriteButton(
+                    isFavorite: character.isFavorite,
+                    onPressed: () => context.read<CharacterListBloc>().add(
+                      CharacterListToggleCharacterFavoriteStatus(
+                        id: character.id,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
 
         // return BlocBuilder<CharacterListBloc, CharacterListState>(

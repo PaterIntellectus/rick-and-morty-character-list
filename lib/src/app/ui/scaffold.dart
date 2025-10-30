@@ -18,7 +18,7 @@ class _AppScaffoldState extends State<AppScaffold>
   final navItems = <BottomNavigationBarItem>[
     BottomNavigationBarItem(
       icon: Icon(Icons.menu_book_outlined),
-      label: 'List',
+      label: 'Characters',
     ),
     BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Favorites'),
   ];

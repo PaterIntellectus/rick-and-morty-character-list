@@ -8,13 +8,17 @@ sealed class CharacterListState with EquatableMixin {
 
   final PaginatedList<Character> _list;
 
+  final int pageSizeLimit = 20;
+
+  bool get isFull => _list.isFull;
   bool get hasMore => !_list.isFull;
 
-  UnmodifiableListView<Character> get list => UnmodifiableListView(_list.items);
-  int get total => _list.total;
+  UnmodifiableListView<Character> get characters =>
+      UnmodifiableListView(_list.items);
+  int? get total => _list.total;
 
   @override
-  List<Object?> get props => [list];
+  List<Object?> get props => [characters];
 }
 
 final class CharacterListInitial extends CharacterListState {

@@ -7,9 +7,8 @@ import 'package:rick_and_morty_character_list/src/shared/data/api/client.dart';
 import 'package:rick_and_morty_character_list/src/shared/data/api/dto.dart';
 import 'package:rick_and_morty_character_list/src/shared/data/memory/storage.dart';
 import 'package:rick_and_morty_character_list/src/shared/lib/collections/paginated_list.dart';
-import 'package:rxdart/subjects.dart';
 
-extension on CharacterDto {
+extension CharacterMapper on CharacterDto {
   Character toDomain() => Character(
     id: id,
     name: name,
@@ -22,62 +21,50 @@ extension on CharacterDto {
 }
 
 class CharacterRepositoryImpl implements CharacterRepository {
-  CharacterRepositoryImpl(this.restClient, this.memoryStorage);
-
-  final RickAndMortyRestApiClient restClient;
-  final InMemoryStorage<CharacterId, Character> memoryStorage;
-  late final stream = BehaviorSubject<PaginatedList<Character>>.seeded(
-    memoryStorage.list(),
-  );
+  const CharacterRepositoryImpl(this.restClient, this.memoryStorage);
 
   @override
   Stream<PaginatedList<Character>> watch({CharacterFilter? filter}) async* {
-    if (!stream.hasValue || stream.value.isEmpty) {
-      await list();
-    }
+    await list();
 
     if (filter != null) {
-      yield* stream
-          .map(
-            (data) => PaginatedList(
-              items: filter.apply(data.items),
-              total: data.total,
-            ),
-          )
-          .asBroadcastStream();
-    } else {
-      yield* stream.asBroadcastStream();
+      yield* memoryStorage.stream.map((data) {
+        final filtered = filter.apply(data);
+
+        return PaginatedList(items: filtered, total: filtered.length);
+      });
+      return;
     }
+
+    yield* memoryStorage.stream
+        .map((data) => PaginatedList(items: data, total: memoryStorage.total))
+        .asBroadcastStream();
   }
 
   @override
   Future<PaginatedList<Character>> list({
-    int offset = 0,
-    int limit = 20,
+    int page = 1,
     CharacterFilter? filter,
   }) async {
     final cached = memoryStorage.list(
-      offset: offset,
-      limit: limit,
+      offset: (page - 1) * _pageLimit,
+      limit: _pageLimit,
       filter: filter?.check,
     );
 
     if (filter != null && filter.favoriteOnly) {
-      return cached;
+      return PaginatedList(items: cached.items, total: cached.total);
+    }
+
+    if (cached.isNotEmpty && cached.total != null && cached.total! > 0) {
+      return PaginatedList(items: cached.items, total: cached.total);
     }
 
     RickAndMortyRestApiPaginatedResponse<List<CharacterDto>> response;
 
     try {
-      response = await restClient.allCharacters(page: (offset ~/ limit) + 1);
+      response = await restClient.allCharacters(page: page);
     } catch (error) {
-      final cached = memoryStorage.list(
-        offset: offset,
-        limit: limit,
-        filter: filter?.check,
-      );
-      // stream.add(stream.value.merge(cached));
-
       return cached;
     }
 
@@ -93,16 +80,9 @@ class CharacterRepositoryImpl implements CharacterRepository {
       return character.toggleFavorite(cachedCharacter.isFavorite);
     }).toList();
 
-    // memoryStorage.saveMany((c) => c.id, characters);
+    memoryStorage.saveMany((c) => c.id, characters);
 
-    final list = PaginatedList(items: characters, total: response.info.count);
-
-    print('qwer:stream:total: ${stream.value.total}');
-    print('qwer:list:total: ${list.total}');
-
-    stream.add(stream.value.merge(list));
-
-    return list;
+    return PaginatedList(items: characters, total: response.info.count);
   }
 
   @override
@@ -113,7 +93,7 @@ class CharacterRepositoryImpl implements CharacterRepository {
       return character;
     }
 
-    final response = await restClient.characters([id]);
+    final response = await restClient.character(id);
 
     character = response.toDomain();
 
@@ -125,23 +105,19 @@ class CharacterRepositoryImpl implements CharacterRepository {
   @override
   void save(Character character) {
     memoryStorage.save(character.id, character);
-
-    final cache = memoryStorage.find(character.id);
-
-    if (cache != null) {
-      stream.add(
-        PaginatedList(
-          items: stream.value.items
-              .map((c) => c.id == cache.id ? cache : c)
-              .toList(),
-          total: memoryStorage.total,
-        ),
-      );
-    }
   }
 
   @override
   void close() {
     restClient.close();
+    memoryStorage.close();
   }
+
+  final RickAndMortyRestApiClient restClient;
+  final InMemoryStorage<CharacterId, Character> memoryStorage;
+
+  // Пагинация "Rick and Morty Api" сервиса работает ТОЛЬКО с постраничной пагинацией
+  // Каждая страница имеет 20 элементов
+  // Посему для простоты реализации мы имеем данный константный лимит в 20 элементов за запрос
+  static const _pageLimit = 20;
 }

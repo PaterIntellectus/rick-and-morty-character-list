@@ -21,31 +21,36 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
     );
   }
 
-  final CharacterRepository characterRepository;
-
   void _subscribe(
     CharacterListSubscribed event,
     Emitter<CharacterListState> emit,
   ) async {
-    print('qwer:bloc:_subscribe');
-
-    emit(
-      CharacterListRefreshing(list: PaginatedList(items: const [], total: 0)),
-    );
+    emit(CharacterListRefreshing(list: state._list));
 
     await emit.forEach(
       characterRepository.watch(filter: event.filter),
       onData: (list) {
-        print('qwer:bloc:_subscribe:list.total: ${list.total}');
-        print('qwer:bloc:_subscribe:list.length: ${list.length}');
+        print('qwer:sub:list:total: ${list.total}');
+        print('qwer:sub:list:isFull: ${list.isFull}');
+        print('qwer:sub:state:total: ${state.total}');
 
-        return CharacterListSuccess(list: list);
+        print('qwer:sub:state:length: ${state.characters.length}');
+
+        final total = list.isEmpty
+            ? state.characters.length
+            : list.length < state.pageSizeLimit
+            ? list.length
+            : null;
+
+        print('qwer:sub:total: $total');
+
+        return CharacterListSuccess(
+          list: PaginatedList(items: list.items, total: total),
+        );
       },
       onError: (error, stackTrace) =>
           CharacterListFailure(list: state._list, message: error.toString()),
     );
-
-    print('qwer:bloc:_subscribe:end');
   }
 
   void _loadMore(
@@ -55,10 +60,18 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
     emit(CharacterListLoadingMore(list: state._list));
 
     try {
-      await characterRepository.list(
-        offset: event.offset,
-        limit: event.limit,
+      final list = await characterRepository.list(
+        page: event.page,
         filter: event.filter,
+      );
+
+      emit(
+        CharacterListSuccess(
+          list: PaginatedList(
+            items: state._list.items,
+            total: list.isEmpty ? state.characters.length : list.total,
+          ),
+        ),
       );
     } catch (error) {
       emit(CharacterListFailure(list: state._list, message: error.toString()));
@@ -79,4 +92,6 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
       emit(CharacterListFailure(list: state._list, message: error.toString()));
     }
   }
+
+  final CharacterRepository characterRepository;
 }

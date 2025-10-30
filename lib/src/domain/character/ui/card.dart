@@ -58,9 +58,12 @@ class CharacterCard extends StatelessWidget {
               Text(character.species, style: theme.textTheme.labelMedium),
 
               if (character.gender != CharacterGender.unknown)
-                Text(
-                  ' - ${character.gender.name}',
-                  style: theme.textTheme.labelMedium,
+                Flexible(
+                  fit: FlexFit.tight,
+                  child: Text(
+                    ' - ${character.gender.name}',
+                    style: theme.textTheme.labelMedium,
+                  ),
                 ),
             ],
           ),
