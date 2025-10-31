@@ -1,11 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty_character_list/src/app/ui/app.dart';
+import 'package:rick_and_morty_character_list/src/domain/character/data/character_database.dart';
+import 'package:rick_and_morty_character_list/src/domain/character/data/repository.dart';
+import 'package:rick_and_morty_character_list/src/shared/data/api/client.dart';
+import 'package:sqflite/sqflite.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   Bloc.observer = BlocLogger();
 
-  runApp(const App());
+  final dbsPath = await getDatabasesPath();
+  final dbPath = '$dbsPath/rick_and_morty_characters.db';
+  await deleteDatabase(dbPath);
+
+  final database = await openDatabase(
+    dbPath,
+    version: 1,
+    onCreate: (db, version) => db.execute(
+      'CREATE TABLE ${CharacterTable.name} ('
+      ' ${CharacterTable.idCol} INTEGER PRIMARY KEY,'
+      ' ${CharacterTable.nameCol} TEXT,'
+      ' ${CharacterTable.genderCol} TEXT,'
+      ' ${CharacterTable.statusCol} TEXT,'
+      ' ${CharacterTable.speciesCol} TEXT,'
+      ' ${CharacterTable.imagePathCol} TEXT,'
+      ' ${CharacterTable.isFavoriteCol} BOOLEAN'
+      ')',
+    ),
+  );
+
+  final characterDatabaseStorage = CharacterDatabaseStorage(database);
+  final rickAndMortyRestApiClient = RickAndMortyRestApiClient();
+  // final memoryCharacterStorage = InMemoryStorage<CharacterId, Character>();
+
+  final characterRepository = CharacterRepositoryImpl(
+    restClient: rickAndMortyRestApiClient,
+    databaseStorage: characterDatabaseStorage,
+    // memoryStorage: memoryCharacterStorage,
+  );
+
+  runApp(App(characterRepository: characterRepository));
 }
 
 class BlocLogger extends BlocObserver {

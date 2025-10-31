@@ -1,52 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:rick_and_morty_character_list/src/app/ui/bloc/bloc.dart';
 import 'package:rick_and_morty_character_list/src/app/ui/scaffold.dart';
-import 'package:rick_and_morty_character_list/src/shared/ui/theme_controller.dart';
+import 'package:rick_and_morty_character_list/src/domain/character/model/repository.dart';
+import 'package:rick_and_morty_character_list/src/shared/ui/theme/cubit/theme_cubit.dart';
 
-class App extends StatefulWidget {
-  const App({super.key});
+class App extends StatelessWidget {
+  const App({super.key, required this.characterRepository});
 
-  @override
-  State<App> createState() => _AppState();
-}
-
-class _AppState extends State<App> with TickerProviderStateMixin {
-  final _themeController = ThemeController();
-
-  @override
-  void dispose() {
-    _themeController.dispose();
-    super.dispose();
-  }
+  final CharacterRepository characterRepository;
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _themeController,
-      builder: (context, child) => MaterialApp(
-        theme: _themeController.theme,
-        home: BlocProvider(
-          create: (context) => AppBloc()..add(AppStarted()),
-          child: BlocBuilder<AppBloc, AppState>(
-            builder: (context, state) {
-              return switch (state) {
-                AppStarting() => Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                ),
-                AppFailure() => Scaffold(
-                  body: Center(child: Text(state.message.toString())),
-                ),
-                AppSucess(characterRepository: final repo) =>
-                  RepositoryProvider(
-                    create: (context) => repo,
-                    dispose: (value) => value.close(),
-                    child: AppScaffold(themeController: _themeController),
-                  ),
-              };
-            },
-          ),
-        ),
+    return BlocProvider(
+      create: (context) => ThemeCubit(),
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, state) {
+          return MaterialApp(
+            themeMode: state,
+            theme: ThemeData.light(),
+            darkTheme: ThemeData.dark(),
+            home: RepositoryProvider(
+              create: (context) => characterRepository,
+              dispose: (value) => value.close(),
+              child: AppScaffold(),
+            ),
+          );
+        },
       ),
     );
   }

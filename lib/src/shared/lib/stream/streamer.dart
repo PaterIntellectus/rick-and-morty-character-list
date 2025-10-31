@@ -7,14 +7,14 @@ abstract class Streamer<T> {
           ? BehaviorSubject<T>()
           : BehaviorSubject<T>.seeded(initial);
 
-  final BehaviorSubject<T> _subject;
-
+  @protected
   void add(T data) => _subject.add(data);
-
-  T? get current => _subject.valueOrNull;
-
-  Stream<T> get stream => _subject.stream;
 
   @mustCallSuper
   void close() => _subject.close();
+
+  final BehaviorSubject<T> _subject;
+
+  Stream<T> get stream => _subject.stream;
+  T? get current => _subject.valueOrNull;
 }

@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:rick_and_morty_character_list/src/shared/data/api/dto.dart';
 
@@ -65,8 +64,6 @@ final class RickAndMortyRestApiClient {
       pathSegments: [..._baseUrl.pathSegments, characterEndpoint],
       queryParameters: {..._baseUrl.queryParameters, 'page': page.toString()},
     );
-
-    debugPrint('qwer:api:url: $url');
 
     final response = await _httpClient.get(url);
 

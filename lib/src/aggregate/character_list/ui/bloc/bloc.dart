@@ -30,19 +30,11 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
     await emit.forEach(
       characterRepository.watch(filter: event.filter),
       onData: (list) {
-        print('qwer:sub:list:total: ${list.total}');
-        print('qwer:sub:list:isFull: ${list.isFull}');
-        print('qwer:sub:state:total: ${state.total}');
-
-        print('qwer:sub:state:length: ${state.characters.length}');
-
         final total = list.isEmpty
             ? state.characters.length
             : list.length < state.pageSizeLimit
             ? list.length
             : null;
-
-        print('qwer:sub:total: $total');
 
         return CharacterListSuccess(
           list: PaginatedList(items: list.items, total: total),
