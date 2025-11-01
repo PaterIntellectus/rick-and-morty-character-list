@@ -13,8 +13,6 @@ void main() async {
 
   final dbsPath = await getDatabasesPath();
   final dbPath = '$dbsPath/rick_and_morty_characters.db';
-  // TODO: remove before release!!
-  // await deleteDatabase(dbPath);
 
   final database = await openDatabase(
     dbPath,
@@ -34,12 +32,10 @@ void main() async {
 
   final characterDatabaseStorage = CharacterDatabaseStorage(database);
   final rickAndMortyRestApiClient = RickAndMortyRestApiClient();
-  // final memoryCharacterStorage = InMemoryStorage<CharacterId, Character>();
 
   final characterRepository = CharacterRepositoryImpl(
     restClient: rickAndMortyRestApiClient,
     databaseStorage: characterDatabaseStorage,
-    // memoryStorage: memoryCharacterStorage,
   );
 
   runApp(App(characterRepository: characterRepository));

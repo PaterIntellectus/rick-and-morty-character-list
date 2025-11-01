@@ -4,6 +4,7 @@ import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/bl
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/grid_view.dart';
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/provider.dart';
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/refresh_indicator.dart';
+import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/sorter.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/filter.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/ui/card.dart';
 import 'package:rick_and_morty_character_list/src/feature/favorite/ui/button.dart';
@@ -58,22 +59,34 @@ class _FavoriteCharactersScreenState extends State<FavoriteCharactersScreen>
               );
             }
 
-            return CharacterGridView(
-              padding: EdgeInsets.only(left: 4, right: 4),
-              filter: filter,
-              itemBuilder: (context, character) => CharacterCard(
-                character: character,
-                actions: [
-                  FavoriteButton(
-                    isFavorite: character.isFavorite,
-                    onPressed: () => context.read<CharacterListBloc>().add(
-                      CharacterListToggleCharacterFavoriteStatus(
-                        id: character.id,
-                      ),
+            return Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: CharacterSorter(),
+                ),
+
+                Expanded(
+                  child: CharacterGridView(
+                    padding: EdgeInsets.only(left: 4, right: 4),
+                    filter: filter,
+                    itemBuilder: (context, character) => CharacterCard(
+                      character: character,
+                      actions: [
+                        FavoriteButton(
+                          isFavorite: character.isFavorite,
+                          onPressed: () =>
+                              context.read<CharacterListBloc>().add(
+                                CharacterListToggleCharacterFavoriteStatus(
+                                  id: character.id,
+                                ),
+                              ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             );
           },
         );

@@ -39,6 +39,8 @@ class CharacterGridView extends StatelessWidget {
           padding: padding,
           sliver: BlocBuilder<CharacterListBloc, CharacterListState>(
             builder: (context, state) {
+              final characters = state.characters.toList();
+
               return SliverGrid(
                 gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 300,
@@ -46,7 +48,7 @@ class CharacterGridView extends StatelessWidget {
                   mainAxisSpacing: 8,
                 ),
                 delegate: SliverChildBuilderDelegate((context, index) {
-                  final character = state.characters.elementAtOrNull(index);
+                  final character = characters.elementAtOrNull(index);
 
                   if (character == null) {
                     switch (state) {
@@ -59,9 +61,7 @@ class CharacterGridView extends StatelessWidget {
                           context.read<CharacterListBloc>().add(
                             CharacterListRequestedMore(
                               page:
-                                  state.characters.length ~/
-                                      state.pageSizeLimit +
-                                  1,
+                                  characters.length ~/ state.pageSizeLimit + 1,
                               filter: filter,
                             ),
                           );

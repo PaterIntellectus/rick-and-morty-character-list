@@ -48,3 +48,12 @@ final class CharacterListToggleCharacterFavoriteStatus
   @override
   List<Object?> get props => [...super.props, id, value];
 }
+
+final class CharacterListSorted extends CharacterListEvent {
+  const CharacterListSorted({required this.sorting});
+
+  final CharacterSorting sorting;
+
+  @override
+  List<Object?> get props => [...super.props, sorting];
+}

@@ -19,29 +19,34 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
       _toggleCharacterFavoriteStatus,
       transformer: droppable(),
     );
+    on<CharacterListSorted>(_sort, transformer: restartable());
   }
 
   void _subscribe(
     CharacterListSubscribed event,
     Emitter<CharacterListState> emit,
   ) async {
-    emit(CharacterListRefreshing(list: state._list));
+    emit(CharacterListRefreshing(list: state._list, sorting: state.sorting));
 
     await emit.forEach(
       characterRepository.watch(filter: event.filter),
       onData: (list) {
         final total = list.isEmpty
-            ? state.characters.length
+            ? state._list.items.length
             : list.length < state.pageSizeLimit
             ? list.length
             : null;
 
         return CharacterListSuccess(
           list: PaginatedList(items: list, total: total),
+          sorting: state.sorting,
         );
       },
-      onError: (error, stackTrace) =>
-          CharacterListFailure(list: state._list, message: error.toString()),
+      onError: (error, stackTrace) => CharacterListFailure(
+        list: state._list,
+        message: error.toString(),
+        sorting: state.sorting,
+      ),
     );
   }
 
@@ -49,7 +54,7 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
     CharacterListRequestedMore event,
     Emitter<CharacterListState> emit,
   ) async {
-    emit(CharacterListLoadingMore(list: state._list));
+    emit(CharacterListLoadingMore(list: state._list, sorting: state.sorting));
 
     try {
       final list = await characterRepository.list(
@@ -61,12 +66,19 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
         CharacterListSuccess(
           list: PaginatedList(
             items: state._list.items,
-            total: list.isEmpty ? state.characters.length : list.total,
+            total: list.isEmpty ? state._list.items.length : list.total,
           ),
+          sorting: state.sorting,
         ),
       );
     } catch (error) {
-      emit(CharacterListFailure(list: state._list, message: error.toString()));
+      emit(
+        CharacterListFailure(
+          list: state._list,
+          message: error.toString(),
+          sorting: state.sorting,
+        ),
+      );
     }
   }
 
@@ -81,8 +93,23 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
 
       await characterRepository.save(character);
     } catch (error) {
-      emit(CharacterListFailure(list: state._list, message: error.toString()));
+      emit(
+        CharacterListFailure(
+          list: state._list,
+          message: error.toString(),
+          sorting: state.sorting,
+        ),
+      );
     }
+  }
+
+  void _sort(CharacterListSorted event, Emitter<CharacterListState> emit) {
+    emit(
+      CharacterListSuccess(
+        list: PaginatedList(items: state._list.items, total: state.total),
+        sorting: event.sorting,
+      ),
+    );
   }
 
   final CharacterRepository characterRepository;

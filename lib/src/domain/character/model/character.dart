@@ -1,5 +1,19 @@
 import 'package:equatable/equatable.dart';
 
+enum CharacterSortOrder { ascending, descending }
+
+enum CharacterSortParam { name, gender }
+
+class CharacterSorting with EquatableMixin {
+  const CharacterSorting({required this.order, required this.param});
+
+  final CharacterSortOrder order;
+  final CharacterSortParam? param;
+
+  @override
+  List<Object?> get props => [order, param];
+}
+
 enum CharacterGender {
   male('Male'),
   female('Female'),
