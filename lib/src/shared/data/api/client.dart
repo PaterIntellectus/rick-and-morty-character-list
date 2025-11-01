@@ -58,7 +58,7 @@ final class RickAndMortyRestApiClient {
     }
   }
 
-  Future<RickAndMortyRestApiPaginatedResponse<List<CharacterDto>>>
+  Future<RickAndMortyRestApiPaginatedResponse<List<CharacterApiDto>>>
   allCharacters({int page = 1}) async {
     final url = _baseUrl.replace(
       pathSegments: [..._baseUrl.pathSegments, characterEndpoint],
@@ -71,11 +71,11 @@ final class RickAndMortyRestApiClient {
 
     return RickAndMortyRestApiPaginatedResponse.fromJson(
       jsonDecode(utf8.decode(response.bodyBytes)),
-      (list) => list!.map((e) => CharacterDto.fromJson(e)).toList(),
+      (list) => list!.map((e) => CharacterApiDto.fromJson(e)).toList(),
     );
   }
 
-  Future<CharacterDto> character(int id) async {
+  Future<CharacterApiDto> character(int id) async {
     final response = await _httpClient.get(
       _baseUrl.replace(
         pathSegments: [..._baseUrl.pathSegments, characterEndpoint, '/$id'],
@@ -84,7 +84,9 @@ final class RickAndMortyRestApiClient {
 
     _handleErrorResponse(response);
 
-    return CharacterDto.fromJson(jsonDecode(utf8.decode(response.bodyBytes)));
+    return CharacterApiDto.fromJson(
+      jsonDecode(utf8.decode(response.bodyBytes)),
+    );
   }
 
   void close() => _httpClient.close();

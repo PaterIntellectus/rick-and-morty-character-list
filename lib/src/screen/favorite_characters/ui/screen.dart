@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/bloc/bloc.dart';
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/grid_view.dart';
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/provider.dart';
+import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/refresh_indicator.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/filter.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/ui/card.dart';
 import 'package:rick_and_morty_character_list/src/feature/favorite/ui/button.dart';
@@ -17,7 +18,7 @@ class FavoriteCharactersScreen extends StatefulWidget {
 
 class _FavoriteCharactersScreenState extends State<FavoriteCharactersScreen>
     with AutomaticKeepAliveClientMixin {
-  final filter = CharacterFilter(favoriteOnly: true);
+  final filter = CharacterFilter(isFavorite: true);
 
   @override
   Widget build(BuildContext context) {
@@ -31,18 +32,29 @@ class _FavoriteCharactersScreenState extends State<FavoriteCharactersScreen>
         return BlocBuilder<CharacterListBloc, CharacterListState>(
           builder: (context, state) {
             if (state is! CharacterListLoading && state.characters.isEmpty) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.star, size: 100),
+              return CharacterRefreshIndicator(
+                filter: filter,
+                child: CustomScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverFillRemaining(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.star, size: 100),
 
-                  Text(
-                    "Your favorites are empty\n"
-                    "Try tapping some Stars ;)",
-                    style: theme.textTheme.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                          Text(
+                            "Your favorites are empty\n"
+                            "Try tapping some Stars ;)",
+                            style: theme.textTheme.titleLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               );
             }
 

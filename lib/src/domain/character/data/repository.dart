@@ -6,12 +6,10 @@ import 'package:rick_and_morty_character_list/src/domain/character/model/filter.
 import 'package:rick_and_morty_character_list/src/domain/character/model/repository.dart';
 import 'package:rick_and_morty_character_list/src/shared/data/api/client.dart';
 import 'package:rick_and_morty_character_list/src/shared/data/api/dto.dart';
-import 'package:rick_and_morty_character_list/src/shared/data/memory/storage.dart';
 import 'package:rick_and_morty_character_list/src/shared/lib/collections/paginated_list.dart';
-import 'package:rick_and_morty_character_list/src/shared/lib/stream/streamer.dart';
 
 extension _CharacterMapper on Character {
-  static Character fromApiDto(CharacterDto dto) => Character(
+  static Character fromApiDto(CharacterApiDto dto) => Character(
     id: dto.id,
     name: dto.name,
     gender: CharacterGender.values.singleWhere((g) => g.name == dto.gender),
@@ -44,29 +42,26 @@ extension _CharacterMapper on Character {
   );
 }
 
-class CharacterRepositoryImpl extends Streamer<List<Character>> implements CharacterRepository  {
-   CharacterRepositoryImpl({
+class CharacterRepositoryImpl implements CharacterRepository {
+  CharacterRepositoryImpl({
     required this.restClient,
     required this.databaseStorage,
     // required this.memoryStorage,
   });
 
   @override
-  Stream<PaginatedList<Character>> watch({CharacterFilter? filter}) async* {
+  Stream<List<Character>> watch({CharacterFilter? filter}) async* {
     await list();
 
-    if (filter != null) {
-      yield* stream.map((data) {
-        final filtered = filter.apply(data);
-
-        return PaginatedList(items: filtered, total: filtered.length);
-      });
-      return;
-    }
-
-    // yield* databaseStorage.stream
-    //     .map((data) => PaginatedList(items: data, total: memoryStorage.total))
-    //     .asBroadcastStream();
+    yield* databaseStorage
+        .watch(
+          where: filter == null
+              ? null
+              : CharacterWhereClause(isFavorite: filter.isFavorite),
+        )
+        .map((data) {
+          return data.map(_CharacterMapper.fromDatabaseDto).toList();
+        });
   }
 
   @override
@@ -74,78 +69,80 @@ class CharacterRepositoryImpl extends Streamer<List<Character>> implements Chara
     int page = 1,
     CharacterFilter? filter,
   }) async {
-    // final cached = memoryStorage.list(
-    //   offset: (page - 1) * _pageLimit,
-    //   limit: _pageLimit,
-    //   filter: filter?.check,
-    // );
-    final isFavoriesOnly = filter != null && filter.favoriteOnly;
+    final isFavoriteFilter = filter != null && filter.isFavorite != null;
+    final where = filter != null && filter.isFavorite != null
+        ? CharacterWhereClause(isFavorite: isFavoriteFilter)
+        : null;
 
-    final cached = await databaseStorage.list(
+    final cached = (await databaseStorage.list(
       offset: (page - 1) * _pageLimit,
       limit: _pageLimit,
-      where: isFavoriesOnly ? CharacterWhereClause(true) : null,
-    );
+      where: where,
+    )).map(_CharacterMapper.fromDatabaseDto).toList();
 
-    if (isFavoriesOnly) {
-      return PaginatedList(items: cached.items, total: cached.total);
+    final cachedTotal = await databaseStorage.count(where: where);
+
+    if (isFavoriteFilter ||
+        (cached.isNotEmpty && cachedTotal != null && cachedTotal > 0)) {
+      return PaginatedList(items: cached, total: cachedTotal);
     }
 
-    if (cached.isNotEmpty && cached.total != null && cached.total! > 0) {
-      return PaginatedList(items: cached.items, total: cached.total);
-    }
-
-    RickAndMortyRestApiPaginatedResponse<List<CharacterDto>> response;
+    RickAndMortyRestApiPaginatedResponse<List<CharacterApiDto>> response;
 
     try {
       response = await restClient.allCharacters(page: page);
     } catch (error) {
-      return cached;
+      if (cached.isEmpty) {
+        throw 'Internet connection hasn\'t been found\n'
+            'Try connecting to the internet and try again';
+      }
+
+      return PaginatedList(items: cached, total: cachedTotal);
     }
 
-    final characters = response.results.map((dto) {
-      final cachedCharacter = memoryStorage.find(dto.id);
+    List<Character> characters = [];
+    for (final dto in response.results) {
+      final cachedCharacter = await databaseStorage.find(
+        dto.id,
+        isFavorite: filter?.isFavorite,
+      );
 
       var character = _CharacterMapper.fromApiDto(dto);
 
       if (cachedCharacter == null) {
-        return character;
+        characters.add(character);
+      } else {
+        characters.add(character.toggleFavorite(cachedCharacter.isFavorite));
       }
+    }
 
-      return character.toggleFavorite(cachedCharacter.isFavorite);
-    }).toList();
-
-    // memoryStorage.saveMany((c) => c.id, characters);
-    databaseStorage.
+    await databaseStorage.saveMany(
+      characters.map((character) => character.toDatabaseDto()).toList(),
+    );
 
     return PaginatedList(items: characters, total: response.info.count);
   }
 
   @override
   Future<Character> find(CharacterId id) async {
-    var character = await databaseStorage.find(id);
+    var dbDto = await databaseStorage.find(id);
 
-    if (character != null) {
-      return character;
+    if (dbDto != null) {
+      return _CharacterMapper.fromDatabaseDto(dbDto);
     }
 
-    final response = await restClient.character(id);
+    final apiDto = await restClient.character(id);
 
-    character = _CharacterMapper.fromApiDto(response);
+    final character = _CharacterMapper.fromApiDto(apiDto);
 
     databaseStorage.save(character.toDatabaseDto());
-    // memoryStorage.save(character.id, character);
 
     return character;
   }
 
   @override
-  void save(Character character) async{
+  void save(Character character) async {
     await databaseStorage.save(character.toDatabaseDto());
-
-    add(await databaseStorage.list());
-    
-    // memoryStorage.save(character.id, character);
   }
 
   @override
@@ -159,7 +156,7 @@ class CharacterRepositoryImpl extends Streamer<List<Character>> implements Chara
   final CharacterDatabaseStorage databaseStorage;
   // final InMemoryStorage<CharacterId, Character> memoryStorage;
 
-  // Пагинация "Rick and Morty Api" сервиса работает ТОЛЬКО с постраничной пагинацией
+  // Пагинация 'Rick and Morty Api' сервиса работает ТОЛЬКО с постраничной пагинацией
   // Каждая страница имеет 20 элементов
   // Посему для простоты реализации мы имеем данный константный лимит в 20 элементов за запрос
   static const _pageLimit = 20;

@@ -37,7 +37,7 @@ class CharacterListBloc extends Bloc<CharacterListEvent, CharacterListState> {
             : null;
 
         return CharacterListSuccess(
-          list: PaginatedList(items: list.items, total: total),
+          list: PaginatedList(items: list, total: total),
         );
       },
       onError: (error, stackTrace) =>

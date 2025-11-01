@@ -13,7 +13,8 @@ void main() async {
 
   final dbsPath = await getDatabasesPath();
   final dbPath = '$dbsPath/rick_and_morty_characters.db';
-  await deleteDatabase(dbPath);
+  // TODO: remove before release!!
+  // await deleteDatabase(dbPath);
 
   final database = await openDatabase(
     dbPath,

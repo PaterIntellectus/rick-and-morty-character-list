@@ -6,7 +6,7 @@ import 'package:rick_and_morty_character_list/src/shared/lib/collections/paginat
 
 abstract interface class CharacterRepository {
   // Stream<Page<Character>> watch({CharacterFilter? filter});
-  Stream<PaginatedList<Character>> watch({CharacterFilter? filter});
+  Stream<List<Character>> watch({CharacterFilter? filter});
   FutureOr<PaginatedList<Character>> list({int page, CharacterFilter? filter});
   FutureOr<Character> find(CharacterId id);
   FutureOr<void> save(Character character);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/bloc/bloc.dart';
+import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/refresh_indicator.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/character.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/filter.dart';
 
@@ -136,17 +137,8 @@ class CharacterGridView extends StatelessWidget {
       ],
     );
 
-    // if (padding != null) {
-    //   widget = Padding(padding: padding!, child: widget);
-    // }
-
     if (dragToRefresh) {
-      widget = RefreshIndicator(
-        child: widget,
-        onRefresh: () async => context.read<CharacterListBloc>().add(
-          CharacterListSubscribed(filter: filter),
-        ),
-      );
+      widget = CharacterRefreshIndicator(filter: filter, child: widget);
     }
 
     return widget;

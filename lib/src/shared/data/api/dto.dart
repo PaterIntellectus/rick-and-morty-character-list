@@ -1,5 +1,5 @@
-class CharacterDto {
-  const CharacterDto({
+class CharacterApiDto {
+  const CharacterApiDto({
     required this.id,
     required this.name,
     required this.status,
@@ -14,20 +14,21 @@ class CharacterDto {
     required this.created,
   });
 
-  factory CharacterDto.fromJson(Map<String, dynamic> json) => CharacterDto(
-    id: json['id'] as int,
-    name: json['name'] as String,
-    status: json['status'] as String,
-    species: json['species'] as String,
-    type: json['type'] as String,
-    gender: json['gender'] as String,
-    origin: Map<String, String>.from(json['origin'] as Map),
-    location: Map<String, String>.from(json['location'] as Map),
-    image: json['image'] as String,
-    episode: List<String>.from(json['episode'] as List),
-    url: json['url'] as String,
-    created: json['created'] as String,
-  );
+  factory CharacterApiDto.fromJson(Map<String, dynamic> json) =>
+      CharacterApiDto(
+        id: json['id'] as int,
+        name: json['name'] as String,
+        status: json['status'] as String,
+        species: json['species'] as String,
+        type: json['type'] as String,
+        gender: json['gender'] as String,
+        origin: Map<String, String>.from(json['origin'] as Map),
+        location: Map<String, String>.from(json['location'] as Map),
+        image: json['image'] as String,
+        episode: List<String>.from(json['episode'] as List),
+        url: json['url'] as String,
+        created: json['created'] as String,
+      );
 
   final int id;
   final String name;

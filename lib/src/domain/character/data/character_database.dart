@@ -1,4 +1,3 @@
-import 'package:rick_and_morty_character_list/src/shared/lib/collections/paginated_list.dart';
 import 'package:rick_and_morty_character_list/src/shared/lib/stream/streamer.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -15,13 +14,17 @@ abstract class CharacterTable {
 }
 
 class CharacterWhereClause {
-  const CharacterWhereClause(this.isFavorite);
+  const CharacterWhereClause({this.isFavorite});
 
-  final bool isFavorite;
+  final bool? isFavorite;
+
+  bool apply(CharacterDatabaseDto dto) =>
+      isFavorite != null && dto.isFavorite == isFavorite;
 
   @override
-  String toString() =>
-      'WHERE ${CharacterTable.isFavoriteCol} = ${isFavorite ? 1 : 0}';
+  String toString() => 'WHERE ${CharacterTable.isFavoriteCol} = ?';
+
+  List<dynamic> get args => [if (isFavorite != null) '${isFavorite! ? 1 : 0}'];
 }
 
 class CharacterDatabaseDto {
@@ -68,36 +71,30 @@ class CharacterDatabaseDto {
 }
 
 class CharacterDatabaseStorage extends Streamer<List<CharacterDatabaseDto>> {
-  CharacterDatabaseStorage(this.database);
+  CharacterDatabaseStorage(this.database) : super(initial: const []) {
+    list().then((value) => add(value));
+  }
 
-  @override
   Stream<List<CharacterDatabaseDto>> watch({
     CharacterWhereClause? where,
   }) async* {
-    await list();
-
     if (where != null) {
-      yield* stream.map((data) {
-        final filtered = filter.apply(data);
-
-        return PaginatedList(items: filtered, total: filtered.length);
-      });
+      yield* stream
+          .map((data) => data.where(where.apply).toList())
+          .asBroadcastStream();
       return;
     }
 
-    // yield* databaseStorage.stream
-    //     .map((data) => PaginatedList(items: data, total: memoryStorage.total))
-    //     .asBroadcastStream();
+    yield* stream.asBroadcastStream();
   }
 
   Future<int?> count({CharacterWhereClause? where}) async {
     return Sqflite.firstIntValue(
-      await database.rawQuery(
-        [
-          'SELECT COUNT(*) FROM ${CharacterTable.name}',
-          if (where != null)
-            'WHERE ${CharacterTable.isFavoriteCol} = ${where.isFavorite}',
-        ].join(' '),
+      await database.query(
+        CharacterTable.name,
+        columns: ['COUNT(*)'],
+        where: where != null ? '${CharacterTable.isFavoriteCol} = ?' : null,
+        whereArgs: where != null ? [where.isFavorite] : const [],
       ),
     );
   }
@@ -128,11 +125,19 @@ class CharacterDatabaseStorage extends Streamer<List<CharacterDatabaseDto>> {
     add(await list());
   }
 
-  Future<CharacterDatabaseDto?> find(int id) async {
+  Future<CharacterDatabaseDto?> find(int id, {bool? isFavorite}) async {
     final data = await database.query(
       CharacterTable.name,
-      where: '${CharacterTable.idCol} = $id',
+      where: [
+        '${CharacterTable.idCol} = ?',
+        if (isFavorite != null) '${CharacterTable.isFavoriteCol} = ?',
+      ].join(' '),
+      whereArgs: [id, ?isFavorite],
     );
+
+    if (data.isEmpty) {
+      return null;
+    }
 
     return CharacterDatabaseDto.fromDatabase(data.single);
   }
@@ -146,7 +151,8 @@ class CharacterDatabaseStorage extends Streamer<List<CharacterDatabaseDto>> {
       CharacterTable.name,
       offset: offset,
       limit: limit,
-      where: where.toString(),
+      where: where?.toString(),
+      whereArgs: where?.args,
     );
 
     return data.map((row) {
