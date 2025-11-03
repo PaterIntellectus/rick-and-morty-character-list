@@ -19,14 +19,14 @@ sealed class CharacterListState with EquatableMixin {
   UnmodifiableListView<Character> get characters {
     var items = _list.items.toList();
 
-    if (sorting.order == CharacterSortOrder.descending) {
-      items = items.reversed.toList();
-    }
-
     if (sorting.param == CharacterSortParam.name) {
       items.sort((a, b) => a.name.compareTo(b.name));
     } else if (sorting.param == CharacterSortParam.gender) {
       items.sort((a, b) => a.gender.index.compareTo(b.gender.index));
+    }
+
+    if (sorting.order == CharacterSortOrder.descending) {
+      return UnmodifiableListView(items.reversed);
     }
 
     return UnmodifiableListView(items);
