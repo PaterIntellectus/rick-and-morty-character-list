@@ -39,7 +39,7 @@ class CharacterGridView extends StatelessWidget {
           padding: padding,
           sliver: BlocBuilder<CharacterListBloc, CharacterListState>(
             builder: (context, state) {
-              final characters = state.characters.toList();
+              final characters = state.characters;
 
               return SliverGrid(
                 gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
