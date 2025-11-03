@@ -1,8 +1,24 @@
 import 'package:equatable/equatable.dart';
 
-enum CharacterSortOrder { ascending, descending }
+enum CharacterSortOrder {
+  ascending,
+  descending;
 
-enum CharacterSortParam { name, gender }
+  CharacterSortOrder toggle() => switch (this) {
+    ascending => descending,
+    descending => ascending,
+  };
+}
+
+enum CharacterSortParam {
+  name,
+  gender;
+
+  CharacterSortParam next() => switch (this) {
+    name => gender,
+    gender => name,
+  };
+}
 
 class CharacterSorting with EquatableMixin {
   const CharacterSorting({required this.order, required this.param});
