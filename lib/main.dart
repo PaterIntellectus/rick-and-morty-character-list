@@ -9,7 +9,7 @@ import 'package:sqflite/sqflite.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  Bloc.observer = BlocLogger();
+  // Bloc.observer = BlocLogger();
 
   final dbsPath = await getDatabasesPath();
   final dbPath = '$dbsPath/rick_and_morty_characters.db';
