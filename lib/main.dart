@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty_character_list/src/app/ui/app.dart';
@@ -9,7 +10,9 @@ import 'package:sqflite/sqflite.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Bloc.observer = BlocLogger();
+  if (kDebugMode) {
+    Bloc.observer = BlocLogger();
+  }
 
   final dbsPath = await getDatabasesPath();
   final dbPath = '$dbsPath/rick_and_morty_characters.db';
