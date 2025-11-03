@@ -2,16 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:rick_and_morty_character_list/src/aggregate/character_list/ui/bloc/bloc.dart';
 import 'package:rick_and_morty_character_list/src/domain/character/model/character.dart';
+import 'package:rick_and_morty_character_list/src/shared/lib/string/string.dart';
 
-class CharacterSorter extends StatefulWidget {
+class CharacterSorter extends StatelessWidget {
   const CharacterSorter({super.key});
-
-  @override
-  State<CharacterSorter> createState() => _CharacterSorterState();
-}
-
-class _CharacterSorterState extends State<CharacterSorter> {
-  var order = CharacterSortOrder.ascending;
 
   @override
   Widget build(BuildContext context) {
@@ -20,26 +14,46 @@ class _CharacterSorterState extends State<CharacterSorter> {
       builder: (context, state) {
         Widget icon = Icon(Icons.sort);
 
-        if (order == CharacterSortOrder.ascending) {
+        if (state.sorting.order == CharacterSortOrder.descending) {
           icon = Transform.scale(scaleY: -1, child: icon);
         }
 
-        return IconButton(
-          icon: icon,
-          onPressed: () {
-            setState(
-              () => order = order == CharacterSortOrder.ascending
-                  ? CharacterSortOrder.descending
-                  : CharacterSortOrder.ascending,
-            );
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton.icon(
+              icon: Icon(Icons.list),
+              label: Text(state.sorting.param?.name.capitalise() ?? 'Sort'),
+              onPressed: () {
+                context.read<CharacterListBloc>().add(
+                  CharacterListSorted(
+                    sorting: CharacterSorting(
+                      order: state.sorting.order,
+                      param:
+                          state.sorting.param?.next() ??
+                          CharacterSortParam.name,
+                    ),
+                  ),
+                );
+              },
+            ),
 
-            context.read<CharacterListBloc>().add(
-              CharacterListSorted(
-                sorting: CharacterSorting(order: order, param: null),
-              ),
-            );
-          },
-          tooltip: 'Sort order (${order.name})',
+            TextButton.icon(
+              iconAlignment: IconAlignment.end,
+              icon: icon,
+              label: Text(state.sorting.order.name.capitalise()),
+              onPressed: () {
+                context.read<CharacterListBloc>().add(
+                  CharacterListSorted(
+                    sorting: CharacterSorting(
+                      order: state.sorting.order.toggle(),
+                      param: state.sorting.param,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         );
       },
     );
