@@ -59,34 +59,39 @@ class _FavoriteCharactersScreenState extends State<FavoriteCharactersScreen>
               );
             }
 
-            return Column(
-              children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: CharacterSorter(),
-                ),
-
-                Expanded(
-                  child: CharacterGridView(
-                    padding: EdgeInsets.only(left: 4, right: 4),
-                    filter: filter,
-                    itemBuilder: (context, character) => CharacterCard(
-                      character: character,
-                      actions: [
-                        FavoriteButton(
-                          isFavorite: character.isFavorite,
-                          onPressed: () =>
-                              context.read<CharacterListBloc>().add(
-                                CharacterListToggleCharacterFavoriteStatus(
-                                  id: character.id,
-                                ),
-                              ),
-                        ),
-                      ],
-                    ),
+            return NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    child: CharacterSorter(),
                   ),
                 ),
               ],
+              body: Column(
+                children: [
+                  Expanded(
+                    child: CharacterGridView(
+                      padding: EdgeInsets.only(left: 4, right: 4),
+                      filter: filter,
+                      itemBuilder: (context, character) => CharacterCard(
+                        character: character,
+                        actions: [
+                          FavoriteButton(
+                            isFavorite: character.isFavorite,
+                            onPressed: () =>
+                                context.read<CharacterListBloc>().add(
+                                  CharacterListToggleCharacterFavoriteStatus(
+                                    id: character.id,
+                                  ),
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         );
